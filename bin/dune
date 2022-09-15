@@ -1,0 +1,8 @@
+(executable
+ (name main)
+ (libraries parser-combinators))
+
+(rule
+ (alias runtest)
+ (action
+  (run ./main.exe)))
