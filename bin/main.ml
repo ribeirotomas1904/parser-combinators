@@ -11,11 +11,9 @@ type expression =
       else_branch : expression;
     }
 
-(* could i use take_while instead of `many1 digit`? *)
 let natural =
   string_of_char_list >> int_of_string >> (fun x -> E_nat x) <$> many1 digit
 
-(* could i use take_while instead of `many`? *)
 let identifier =
   List.cons <$> lower <*> many (lower <|> digit) |> map string_of_char_list
 

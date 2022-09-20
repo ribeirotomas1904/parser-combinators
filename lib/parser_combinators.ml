@@ -1,4 +1,6 @@
 let ( >> ) f g x = g (f x)
+let pair a b = (a, b)
+let string_of_char_list = List.to_seq >> String.of_seq
 
 type 'a parser = string -> ('a * string, string) result
 
@@ -38,6 +40,22 @@ let just_right (parser_a : 'a parser) (parser_b : 'b parser) : 'b parser =
 
 let ( *<* ) = just_left
 let ( *>* ) = just_right
+let optional parser = Option.some <$> parser <|> return None
+
+let chainl1 parser operator =
+  let mapping init expressions =
+    List.fold_left (fun acc (f, value) -> f acc value) init expressions
+  in
+  mapping <$> parser <*> many (pair <$> operator <*> parser)
+
+let chainr1 parser operator =
+  let mapping expressions init =
+    List.fold_right (fun (value, f) acc -> f value acc) expressions init
+  in
+  mapping <$> many (pair <$> parser <*> operator) <*> parser
+
+(* skip_while? *)
+(* take_while? *)
 
 let any_char : char parser = function
   | "" -> Error ""
@@ -74,11 +92,6 @@ let upper = char_predicate is_upper
 let digit = char_predicate is_digit
 let letter = choice lower upper
 let whitespace = char_predicate is_whitespace
-let string_of_char_list = List.to_seq >> String.of_seq
-
-let eof : unit parser = function
-  | "" -> Ok ((), "")
-  | _ -> Error ""
 
 let string s : string parser = function
   | input when String.starts_with input ~prefix:s ->
@@ -87,4 +100,8 @@ let string s : string parser = function
         String.sub input prefix_length (String.length input - prefix_length)
       in
       Ok (s, input')
+  | _ -> Error ""
+
+let eof : unit parser = function
+  | "" -> Ok ((), "")
   | _ -> Error ""
